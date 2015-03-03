@@ -10,8 +10,22 @@ A simple Ruby CLI script to parse a list of DSpace sites for basic info (version
 
 ## How to Run
 
-      ruby dspace_site_parser.rb [input-csv-file] [output-csv-file]
+    ruby dspace_site_parser.rb [input-csv-file] [output-csv-file]
       
+While the command is executing, it will report line-by-line what it is discovering for each DSpace site listed in the `[input-csv-file]`. The official results are also written to the `[output-csv-file]`. 
+
+Once all processing is completed, you will see a summary of the number of sites processed, time it took, and some basic totals, similar to this:
+
+    ##########################
+    FINAL RESULTS
+    PROCESSED 9 URLs in 0 mins, 15 secs
+
+        Valid DSpace Sites: 5
+        Unknown User Interface: 1
+        Invalid URLs: 2
+        Error / No Response: 1
+
+
 ## Input CSV Format
 
 The input format is assumed to be a CSV of this general format:
