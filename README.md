@@ -53,7 +53,7 @@ Old DSpace | http://doesthiswork.dspace.org | 404 Not Found | | |
 Column explanations:
 
 * INFO Column = Just a copy of what was in the input CSV. This is used to identify the URL between the input and output
-* DSPACE_URL = The (possibly updated) DSpace site URL. If the URL from the input CSV was redirected elsewhere, this column will not contain the NEW URL location.
+* DSPACE_URL = The (possibly updated) DSpace site URL. If the URL from the input CSV was redirected elsewhere, this column will now contain the new, updated URL. Notice in the example above "http://anotherdspaceurl.com:8080" in the input CSV was updated to "http://anotherdspaceurl.com" in the output CSV.
 * RESPONSE = The HTTP Response code, or an error message (if response timed out or errored out)
 * VERSION_TAG = The parsed DSpace version tag (from `<meta name="generator">`), or "UNKNOWN" if not found
 * UI_TYPE = The determined DSpace UI type (XMLUI or JSPUI), or "UNKNOWN" if the UI cannot be determined (or it doesn't look like DSpace)
