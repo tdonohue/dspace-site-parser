@@ -30,8 +30,8 @@ Once all processing is completed, you will see a summary of the number of sites 
 
 The input format is assumed to be a CSV of this general format:
 
-ID / Info  | DSpace URL
-------------- | -------------
+INFO  | DSPACE_URL
+----- | ----------
 1  | http://mydspaceurl.com
 2  | http://anotherdspaceurl.com:8080
 My favorite | http://favoritedspace.edu
