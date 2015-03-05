@@ -322,8 +322,8 @@ puts "done."
 
 #----------------
 # Export all results to a two column CSV file
-# NOTE: the first column is always EMPTY so we can
-# use this as a input to dspace-site-parser.rb
+# NOTE: the first column is the "Source" of the DSpace URL
+# (i.e where we found it)
 puts "Writing results to CSV..."
 CSV.open(output_file, "w",
     :write_headers => true,
