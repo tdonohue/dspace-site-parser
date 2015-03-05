@@ -14,6 +14,7 @@ require 'set'       # Needed for 'url_response' method
 require 'nokogiri'  # XML/HTML parser used to determine DSpace version
 require 'open-uri'  # Required to pass URLs to nokogiri
 require 'csv'       # Used to write results to CSV
+load 'utils.rb'     # Load our utils.rb
 
 # Get input & output files from commandline arguments
 input_file = ARGV[0]
@@ -22,18 +23,6 @@ output_file = ARGV[1]
 ####################
 # Utility methods
 ####################
-# Check if a string is a valid URL
-# Returns true/false based on whether URL is valid
-# Borrowed from: http://stackoverflow.com/a/5331096
-def uri?(string)
-  uri = URI.parse(string)
-  %w( http https ).include?(uri.scheme)
-rescue URI::BadURIError
-  false
-rescue URI::InvalidURIError
-  false
-end
-
 # Gets a given URL's response (following any redirects)
 # Code tweaked from: http://stackoverflow.com/a/9365490
 # AND: http://shadow-file.blogspot.co.uk/2009/03/handling-http-redirection-in-ruby.html
@@ -41,12 +30,12 @@ end
 # Parameters:
 #    * url = URL to connect to
 #    * max_redirects = Max number of redirects to follow (default = 6)
-#    * timeout = Response timeout in seconds (default = 10 seconds)
+#    * timeout = Response timeout in seconds
 # Returns the following:
 #   1. Final URL (after following any redirects)
 #   2. Response object
 #   3. Parsed HTML response (from Nokogiri)
-def url_response(url, max_redirects=6, timeout=10)
+def url_response(url, max_redirects=6, timeout=7)
   response = nil
   parsed_page = nil
   seen = Set.new
@@ -61,10 +50,10 @@ def url_response(url, max_redirects=6, timeout=10)
     http.read_timeout = timeout
 
     # Determine path to access
-    path=url.path
-    path="/" if path==""
-    # Pass querystring to path if found
-    path=path + "?" + url.query if !url.query.nil?
+    # Treat an empty path as "/"
+    path = (url.path.nil? or url.path.empty?) ? "/" : url.path
+    # Append querystring to path if found
+    path = path + "?" + url.query if !url.query.nil?
 
     # Initialize our HTTP request
     req = Net::HTTP::Get.new(path)
@@ -200,13 +189,15 @@ count = 0
 valid_dspace_count = 0
 invalid_url_count = 0
 error_count = 0
+jspui_count = 0
+xmlui_count = 0
 unknown_ui_count = 0
 
 # Open our output CSV file for writing (overwrite any existing file)
 # Initialize it with a CSV header
 CSV.open(output_file, "w",
     :write_headers => true,
-    :headers => ["INFO", "DSPACE_URL", "RESPONSE", "VERSION_TAG", "UI_TYPE"]) do |csv|
+    :headers => ["SOURCE", "DSPACE_URL", "RESPONSE", "VERSION_TAG", "UI_TYPE"]) do |csv|
 
   # Loop through our input CSV line-by-line
   # First line of CSV is assumed to be a header
@@ -215,7 +206,7 @@ CSV.open(output_file, "w",
     count+=1
     # Check number of columns in a line
     if line.length>=2
-      info = line[0]
+      source = line[0]
       # Repo URL should be in second column
       url = line[1]
     else
@@ -268,7 +259,11 @@ CSV.open(output_file, "w",
           version,ui_type = dspace_info(final_url,parsed_page)
 
           # If UI Type was XMLUI or JSPUI, count this as a "valid" DSpace URL
-          if ui_type.include?("XMLUI") or ui_type.include?("JSPUI")
+          if ui_type.include?("XMLUI")
+            xmlui_count+=1
+            valid_dspace_count+=1
+          elsif ui_type.include?("JSPUI")
+            jspui_count+=1
             valid_dspace_count+=1
           # Else if UI Type is "UNKNOWN", this may not be a DSpace site
           elsif ui_type.include?("UNKNOWN")
@@ -303,7 +298,7 @@ CSV.open(output_file, "w",
     # If "final_url" is defined, use it as the output URL
     url = final_url ? final_url.to_s : url
     # Append this URL's results into the output CSV
-    csv << [ info, url, response_msg, version, ui_type ]
+    csv << [ source, url, response_msg, version, ui_type ]
   end # end loop through input CSV lines (CSV.foreach)
 end # end CSV.open
 
@@ -312,7 +307,7 @@ processing_time = Time.now - beginning_time
 puts "\n##########################\n"
 puts " FINAL RESULTS"
 puts " PROCESSED #{count} URLs in #{(processing_time / 60).floor} mins, #{(processing_time % 60).floor} secs\n\n"
-puts "     Valid DSpace Sites: #{valid_dspace_count}"
+puts "     Valid DSpace Sites: #{valid_dspace_count} (JSPUI: #{jspui_count} , XMLUI: #{xmlui_count})"
 puts "     Unknown User Interface (UI): #{unknown_ui_count}"
 puts "     Invalid URLs: #{invalid_url_count}"
 puts "     Error / No Response: #{error_count}"
