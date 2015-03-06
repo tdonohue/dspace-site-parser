@@ -132,44 +132,59 @@ def dspace_info(url, parsed_page)
   #-------------------------
   # Get DSpace UI Type
   #-------------------------
-  # To determine XML vs JSPUI we need to send a second request
-  # Append "?XML" or "&XML" on original URL path to check if this is XMLUI
-  xml_url = url.to_s.include?("?") ? url.to_s + "&XML" : url.to_s + "?XML"
-  begin
-    xml_url,response,parsed_xml_page = url_response(xml_url)
-  rescue => e
-    response = nil
-    response_error = e
+  
+  # Quick check. Does this URL include either "jspui" or "xmlui". 
+  # If so, let's trust the URL path is accurate
+  if url.to_s.match(/\bjspui\b/i)
+    ui_type = "JSPUI"
+  elsif url.to_s.match(/\bxmlui\b/i)
+    ui_type = "XMLUI"
   end
-          
-  # If second response was successful
-  if !response.nil?
-    if response.kind_of?(Net::HTTPSuccess)
-      # Try to parse this result as XML
-      xml = Nokogiri::XML(response.body)
-      # If the result is an XML document with a <document> root node,
-      # Then this is definitely the XMLUI.
-      if xml.root and xml.root.name == "document"
-        ui_type = "XMLUI"
-      # Else if the response body includes the word "mydspace", this is definitely JSPUI
-      elsif(response.body.match(/\bmydspace\b/i))
-        ui_type = "JSPUI"
-      # Else if the response body includes the word ".jsp", this is definitely JSPUI
-      elsif(response.body.match(/\b.jsp\b/i))
-        ui_type = "JSPUI"
-      # Else if none of the above match, but the response body includes the word "dspace"
-      # it's *possibly* JSPUI (but no guarantees)
-      elsif(response.body.match(/\bdspace\b/i))
-        ui_type = "JSPUI (possibly)"
-      else # Otherwise, this really may not be a DSpace UI
-        ui_type = "UNKNOWN (may not be DSpace)"
-      end
-    else # Else if response returned but not a "SUCCESS"
-      ui_type = "RESPONSE FAILED: (#{response.code} #{response.message})"
+  
+  # If URL match didn't work, we'll have to parse to determine UI type
+  if ui_type.nil? or ui_type.empty?
+    # To determine XML vs JSPUI we need to send a second request
+    # Append "?XML" or "&XML" on original URL path to check if this is XMLUI
+    xml_url = url.to_s.include?("?") ? url.to_s + "&XML" : url.to_s + "?XML"
+    begin
+      xml_url,response,parsed_xml_page = url_response(xml_url)
+    rescue => e
+      response = nil
+      response_error = e
     end
-  else # Else if response was nil
-    ui_type = "RESPONSE ERROR: (#{response_error})"
-  end # End if ?XML response
+          
+    # If second response was successful
+    if !response.nil?
+      if response.kind_of?(Net::HTTPSuccess)
+        # Try to parse this result as XML
+        xml = Nokogiri::XML(response.body)
+        # If the result is an XML document with a <document> root node,
+        # Then this is definitely the XMLUI.
+        if xml.root and xml.root.name == "document"
+          ui_type = "XMLUI"
+        # If our parsed version said this was DSpace, and it is NOT XMLUI, then it must be JSPUI
+        elsif(version.include?("DSpace"))
+          ui_type = "JSPUI"
+        # Else if the response body includes the word "mydspace", this is definitely JSPUI
+        elsif(response.body.match(/\bmydspace\b/i))
+          ui_type = "JSPUI"
+        # Else if the response body includes the word "htmlmap", this is definitely JSPUI
+        elsif(response.body.match(/\bhtmlmap\b/i))
+          ui_type = "JSPUI"
+        # Else if none of the above match, but the response body includes the word "dspace"
+        # it's *possibly* JSPUI (but no guarantees)
+        elsif(response.body.match(/\bdspace\b/i))
+          ui_type = "JSPUI (possibly)"
+        else # Otherwise, this really may not be a DSpace UI
+          ui_type = "UNKNOWN (may not be DSpace)"
+        end
+      else # Else if response returned but not a "SUCCESS"
+        ui_type = "RESPONSE FAILED: (#{response.code} #{response.message})"
+      end
+    else # Else if response was nil
+      ui_type = "RESPONSE ERROR: (#{response_error})"
+    end # End if ?XML response
+  end # End if ui_type empty
 
   # Return parsed DSpace info
   return version, ui_type
