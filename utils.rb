@@ -29,6 +29,8 @@ def comparable_uri(string)
     host = uri.host.sub(/www\./,'')
     # Treat an empty path as "/"
     path = (uri.path.nil? or uri.path.empty?) ? "/" : uri.path
+    # If path doesn't end with a slash, add it
+    path = path.end_with?("/") ? path : path + "/"
     # Return [host]/[path]
     host + path
   else
