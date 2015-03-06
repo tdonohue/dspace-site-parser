@@ -210,14 +210,14 @@ unknown_ui_count = 0
 
 # Open our output CSV file for writing (overwrite any existing file)
 # Initialize it with a CSV header
-CSV.open(output_file, "w",
+CSV.open(output_file, "w:UTF-8",
     :write_headers => true,
     :headers => ["SOURCE", "DSPACE_URL", "RESPONSE", "VERSION_TAG", "UI_TYPE"]) do |csv|
 
   # Loop through our input CSV line-by-line
   # First line of CSV is assumed to be a header
-  # If input CSV has windows encoding, convert to UTF-8. Otherwise UTF-8 is assumed
-  CSV.foreach(input_file, :headers => true, :encoding => 'windows-1251:utf-8') do |line|
+  # CSV must be UTF-8 encoded
+  CSV.foreach(input_file, :headers => true, :encoding => 'utf-8') do |line|
     count+=1
     # Check number of columns in a line
     if line.length>=2

@@ -23,10 +23,11 @@ temp_csv = merged_csv + ".temp"
 
 puts "Merging CSVs..."
 # Open a new (temporary) merged CSV
-CSV.open(temp_csv, 'w') do |csv|
+CSV.open(temp_csv, 'w:UTF-8') do |csv|
 
   # Read all the entries from the first CSV
   # and write them to the merged CSV
+  # (Leave headers in place)
   CSV.foreach(first_csv, :encoding => 'windows-1251:utf-8') do |row|
     csv << row
   end
@@ -42,9 +43,9 @@ puts "done."
 
 puts "Removing duplicate entries based on URL column index #{url_column_index}..."
 # Now, remove all duplicates from our merged CSV
-CSV.open(merged_csv, 'w') do |csv|  
+CSV.open(merged_csv, 'w:UTF-8') do |csv|  
   # Read all it's current entries, and remove duplicates
-  CSV.read(temp_csv).uniq{|x|
+  CSV.read(temp_csv, :encoding => 'utf-8').uniq{|x|
                            # Parse the URL, returning a "comparable" version
                            # which can be used to determine uniqueness
                            comparable_uri(x[url_column_index])

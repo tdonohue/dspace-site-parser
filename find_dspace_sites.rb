@@ -254,7 +254,7 @@ puts "done."
 # NOTE: the first column is the "Source" of the DSpace URL
 # (i.e where we found it)
 puts "Writing results to CSV..."
-CSV.open(output_file, "w",
+CSV.open(output_file, "w:UTF-8",
     :write_headers => true,
     :headers => ["SOURCE", "DSPACE_URL"]) do |csv|
   # Loop through results, writing each to CSV

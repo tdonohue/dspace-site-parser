@@ -28,7 +28,7 @@ Once all processing is completed, you will see a summary of the number of sites 
 
 ## Input CSV Format
 
-The input format is assumed to be a CSV of this general format:
+The input format is assumed to be a (UTF-8 encoded) CSV of this general format:
 
 INFO  | DSPACE_URL
 ----- | ----------
@@ -38,6 +38,7 @@ My favorite | http://favoritedspace.edu
 Old DSpace | http://doesthiswork.dspace.org
 
 Essentially, it's just a list of DSpace URLs, but the first column can be used to identify them in some way or provide extra info about the URL.
+WARNING: if your CSV is NOT UTF-8 encoded (or ASCII, which is a subset of UTF-8), you will likely hit read errors. Make sure to UTF-8 encode it first!
 
 ## Output CSV Format
 
