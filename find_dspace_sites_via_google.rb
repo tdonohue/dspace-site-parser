@@ -223,10 +223,10 @@ if $google_search_options.include?("6")
   # Parse these results, discarding anything NOT including "oai/request"
   results.keep_if { |source,url| url =~ /oai\/request/ }
 
-  # Update url set, removing "/oai/request" or "/dspace-oai/request 
+  # Update url set, removing "/[something]oai/request"
   # (and optionally a querystring)
   # This should result in a likely DSpace homepage URL
-  results.collect! { |source,url| [source, url.sub(/\/(dspace-)?oai\/request(\?.*)?$/, '/')] }
+  results.collect! { |source,url| [source, url.sub(/\/[^\/]*oai\/request(\?.*)?$/, '/')] }
 
   # Append to our overall result set
   overall_results.push(*results)
