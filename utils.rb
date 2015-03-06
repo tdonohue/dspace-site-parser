@@ -34,7 +34,8 @@ def comparable_uri(string)
     # Return [host]/[path]
     host + path
   else
-    # If not a URI, just return original string
-    string
+    # If not a URI, just return empty string
+    # We don't want to compare or keep around non-URIs
+    ""
   end
 end
