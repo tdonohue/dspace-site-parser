@@ -25,6 +25,7 @@ load 'utils.rb'     # Load our utils.rb
 # Decide which sources to enable for searching
 $opendoar = true
 $roar = true
+$oai_registry = true
 
 # Get output file from commandline arguments
 output_file = ARGV.shift
@@ -72,15 +73,16 @@ end
 # http://roar.eprints.org/cgi/oai2?verb=ListSets
 #
 # Parameters:
-# * set = the OAI-PMH set identifier
-def roar_search(set)
+# * set_name = Human readable set name
+# * set      = the OAI-PMH set identifier
+def roar_search(set_name, set)
   results = Array.new
 
   # If ROAR is disabled in global config, just return no results
   return results if !$roar
 
   puts "---------------------"
-  puts "Querying ROAR.eprints.org OAI-PMH for set '#{set}'..."
+  puts "Querying ROAR.eprints.org OAI-PMH for set \"#{set_name}\"..."
 
   # Build initial OAI-PMH querystring
   querystring = URI.encode_www_form("verb" => "ListRecords", "metadataPrefix" => "oai_dc", "set" => set)
@@ -108,7 +110,7 @@ def roar_search(set)
       url = link.content.to_s
 
       # Save URL to our results set, with a source of "ROAR"
-      results << [ "roar.eprints.org", url ]
+      results << [ "roar.eprints.org (Set: #{set_name})", url ]
     end
 
     # Parse out the OAI-PMH ResumptionToken (for the next page of results)
@@ -124,6 +126,53 @@ def roar_search(set)
 
   return results
 end
+
+# Query a specified OAI-PMH registry for any registered
+# sites that look like a DSpace Site.  DSpace tends to
+# have very unique looking OAI-PMH base URLs:
+# [dspace-url]/oai/request
+#
+# Parameters:
+# * registry_name = Human readable OAI-PMH registry name
+# * xml_interface = the OAI-PMH registries's XML interface
+def oai_registry_search(registry_name, xml_interface)
+  results = Array.new
+
+  # If OAI Regsitry is disabled in global config, just return no results
+  return results if !$oai_registry
+
+  puts "---------------------"
+  puts "Querying #{registry_name} OAI-PMH registry for likely DSpace sites ..."
+  puts "(using XML interface at: #{xml_interface})"
+
+  # Request the full registry in XML & check return status
+  open_page = open(xml_interface)
+  puts "       Status returned: #{open_page.status.join(' ')}"
+
+  # Parse the response as XML
+  doc = Nokogiri::XML(open_page)
+  # Remove namespaces from result, as Nokogiri gets confused by their XML namespaces
+  doc.remove_namespaces!
+
+  # In the results, get all <baseURL> tags which contain "/request". 
+  # DSpace OAI interfaces tend to look like this [dspace.url]/oai/request
+  links = doc.xpath("//baseURL[contains(.,'/request')]")
+  # Get size of result set
+  puts "       Results found: #{links.length}"
+
+  # Loop through each result
+  links.each do |link|
+    # Get result URL
+    url = link.content.to_s
+
+    # Save URL to our results set, with a source of "OpenDOAR"
+    results << [ "#{registry_name} OAI-PMH Registry", url ]
+  end
+
+  return results
+end
+
+
 
 # Get an overall results set
 overall_results = Array.new
@@ -142,7 +191,7 @@ overall_results.push(*results)
 # First, query ROAR for the "DSpace" set
 # NOTE: this set ID is from http://roar.eprints.org/cgi/oai2?verb=ListSets
 dspace_set = "736F6674776172653D647370616365"
-results = roar_search(dspace_set)
+results = roar_search("DSpace", dspace_set)
 
 # Append to our overall result set
 overall_results.push(*results)
@@ -150,10 +199,40 @@ overall_results.push(*results)
 # Second, query ROAR for the "Open Repository" set
 # NOTE: this set ID is from http://roar.eprints.org/cgi/oai2?verb=ListSets
 dspace_set = "736F6674776172653D6F70656E7265706F"
-results = roar_search(dspace_set)
+results = roar_search("Open Repository", dspace_set)
 
 # Append to our overall result set
 overall_results.push(*results)
+
+#----------------------------------
+# OAI-PMH Registry searches
+# Currently, both major OAI-PMH registries
+# use a similar XML export format. 
+# So we can use the same function!
+#----------------------------------
+
+# First, get the results from U of Illinois
+results = oai_registry_search("U of Illinois", "http://gita.grainger.uiuc.edu/registry/ListAllRepos.asp?format=xml")
+
+# Second, get the results from OpenArchives.org
+results2 = oai_registry_search("OpenArchives.org", "http://www.openarchives.org/pmh/registry/ListFriends")
+
+# Combine the two result sets into one
+results.push(*results2)
+
+# Parse these results, discarding anything NOT ending with "/request"
+results.keep_if { |source,url| url =~ /\/request$/ }
+
+# Update url set, removing "/[something]oai[something]/request"
+# This should result in a likely DSpace homepage URL
+results.collect! { |source,url| [source, url.sub(/\/[^\/]*oai[^\/]*\/request$/, '/')] }
+
+# Update url set, removing "/request" (In case previous 'sub' didn't catch everything)
+results.collect! { |source,url| [source, url.sub(/\/request$/, '/')] }
+
+# Append to our overall result set
+overall_results.push(*results)
+
 
 #----------------
 # Remove all duplicate results from our result set
