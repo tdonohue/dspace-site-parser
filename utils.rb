@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # util.rb
 # Various utility methods useful in parsing URLs, etc
 #

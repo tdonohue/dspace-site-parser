@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # find_dspace_sites_via_google.rb
 #
 # Performs several Google queries to attempt to

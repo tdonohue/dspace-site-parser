@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # dspace_site_parser.rb
 # A quick and dirty ruby script to parse DSpace URLs
 # and attempt to determine the DSpace version and/or UI
@@ -128,7 +130,7 @@ def dspace_info(url, parsed_page)
   # If generator with @content found, then this is the DSpace Version. 
   # Otherwise, version is "UNKNOWN" (or possibly < 1.6.0 when this <meta> tag was added)
   version = (generator and !generator.empty?) ? generator : "UNKNOWN (possibly < 1.6.0)" 
-          
+
   #-------------------------
   # Get DSpace UI Type
   #-------------------------
@@ -312,6 +314,19 @@ CSV.open(output_file, "w:UTF-8",
     #----------------------------
     # If "final_url" is defined, use it as the output URL
     url = final_url ? final_url.to_s : url
+
+    # Ensure all resulting strings are UTF-8 encoded, before writing to CSV
+    # Options: ensure invalid chars or undefined are just replaced with "?"
+    # (This avoids any possible encoding errors when writing to CSV as UTF-8,
+    #  since Net::HTTP doesn't handle encoding correctly. 
+    #  See: https://bugs.ruby-lang.org/issues/2567)
+    encoding_options = { :invalid => :replace, :undef => :replace, :replace => "?"}
+    source.encode!("utf-8", encoding_options) if source
+    url.encode!("utf-8", encoding_options) if url
+    response_msg.encode!("utf-8", encoding_options) if response_msg
+    version.encode!("utf-8", encoding_options) if version
+    ui_type.encode!("utf-8", encoding_options) if ui_type
+
     # Append this URL's results into the output CSV
     csv << [ source, url, response_msg, version, ui_type ]
   end # end loop through input CSV lines (CSV.foreach)

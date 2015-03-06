@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # find_dspace_sites.rb
 #
 # Uses a variety of sites / registries and some

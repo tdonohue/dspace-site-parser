@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # merge_site_csvs.rb
 #
 # Merges two DSpace site CSVs into a single output
