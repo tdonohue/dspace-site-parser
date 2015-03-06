@@ -233,6 +233,13 @@ results.collect! { |source,url| [source, url.sub(/\/request$/, '/')] }
 # Append to our overall result set
 overall_results.push(*results)
 
+#------------------------------------
+# TODO: Other possible future sources
+#------------------------------------
+# OpenAIRE data providers: https://www.openaire.eu/search/openaire-data-providers
+# OpenAIRE also includes DRIVER repositories
+# But, currently their list is not easy to parse, and not very large overall
+
 
 #----------------
 # Remove all duplicate results from our result set
