@@ -58,3 +58,48 @@ Column explanations:
 * RESPONSE = The HTTP Response code, or an error message (if response timed out or errored out)
 * VERSION_TAG = The parsed DSpace version tag (from `<meta name="generator">`), or "UNKNOWN" if not found
 * UI_TYPE = The determined DSpace UI type (XMLUI or JSPUI), or "UNKNOWN" if the UI cannot be determined (or it doesn't look like DSpace)
+
+
+# Complementary Scripts
+
+## DSpace Locating Scripts
+
+### find_dspace_sites.rb
+
+    ruby find_dspace_sites.rb [results-csv-file]
+
+The `find_dspace_sites.rb` script attempts to locate DSpace Sites in the following sources:
+* OpenDOAR.org registry
+* ROAR.eprints.org registry
+* OpenArchives.org OAI-PMH registry
+* U of Illinois OAI-PMH registry
+
+Data from each of those registries is pulled down (via an API or machine readable interface) and parsed for URLs which look like or report to be DSpace sites. The URL list is deduplicated, and written to a CSV which matches the [Input CSV Format](#input-csv-format) of the `dspace_site_parser.rb` script.
+
+### find_dspace_sites_via_google.rb
+
+    ruby find_dspace_sites_via_google.rb [results-csv-file]
+
+The `find_dspace_sites)via_google.rb` script attempts to locate DSpace Sites via a variety of unique Google searches (mostly based on URL paths) which tend to return results that are DSpace URLs.
+
+Data from each of these searches is parsed for URLs which look like or report to be DSpace sites. The URL list is deduplicated, and written to a CSV which matches the [Input CSV Format](#input-csv-format) of the `dspace_site_parser.rb` script.
+
+WARNING: Google obviously does not like or approve of automatically searching and parsing search results. Google will begin throwing 503 errors for every automated query once it realizes that a script is likely running. I do not recommend running this script frequently...it is really just there as an optional way to attempt to locate unregistered DSpace URLs.
+
+## Data Manipulation Scripts
+
+### merge_site_CSVs.rb
+
+    ruby merge_site_CSVs.rb [csv-file-1] [csv-file-2] [merged-csv-file]
+
+This script simply merges two DSpace site CSV files and removes any duplicate entries found. It's useful in merging the outputs of any [DSpace Locating Scripts](#dspace-locating-scripts). Optionally, you can also just pass in a single CSV file to remove its duplicate entries.
+
+By default, the column headers of the *first* CSV are kept in tact, and the second CSV's data is appended onto the end. The input CSVs may be either of the [Input CSV Format](#input-csv-format) or [Output CSV Format](#output-csv-format) detailed above.
+
+### find_country.rb
+
+    ruby find_country.rb [input-csv-file] [csv-file-with-countries]
+
+This script takes in a DSpace site CSV file, and attempts to determine the hosting country of every listed URL. The input CSV file may be either of the [Input CSV Format](#input-csv-format) or [Output CSV Format](#output-csv-format) detailed above.
+
+The result is that the data from the input file is copied to the output CSV, and a new "COUNTRY" column is appended to the end. This new column lists the name of the country, or "UNKNOWN" if unable to be determined.
